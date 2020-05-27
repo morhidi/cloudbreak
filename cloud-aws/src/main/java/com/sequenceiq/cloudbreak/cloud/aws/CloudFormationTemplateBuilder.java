@@ -62,7 +62,8 @@ public class CloudFormationTemplateBuilder {
                     encryptedAMI,
                     group.getSecurity().isUseNetworkCidrAsSourceForDefaultRules(),
                     getInstanceProfile(group),
-                    awsInstanceView.getOnDemandPercentage());
+                    awsInstanceView.getOnDemandPercentage(),
+                    awsInstanceView.getSpotMaxPrice());
             awsGroupViews.add(groupView);
             if (group.getType() == InstanceGroupType.GATEWAY) {
                 awsGatewayGroupViews.add(groupView);

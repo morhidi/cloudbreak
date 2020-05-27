@@ -1,5 +1,6 @@
 package com.sequenceiq.freeipa.converter.instance.template;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,7 +22,6 @@ import com.sequenceiq.freeipa.api.model.ResourceStatus;
 import com.sequenceiq.freeipa.api.v1.freeipa.stack.model.common.instance.InstanceTemplateRequest;
 import com.sequenceiq.freeipa.api.v1.freeipa.stack.model.common.instance.VolumeRequest;
 import com.sequenceiq.freeipa.api.v1.freeipa.stack.model.common.instance.aws.AwsInstanceTemplateParameters;
-import com.sequenceiq.freeipa.api.v1.freeipa.stack.model.common.instance.aws.AwsInstanceTemplateSpotParameters;
 import com.sequenceiq.freeipa.controller.exception.BadRequestException;
 import com.sequenceiq.freeipa.entity.Template;
 import com.sequenceiq.freeipa.service.DefaultRootVolumeSizeProvider;
@@ -49,8 +49,15 @@ public class InstanceTemplateRequestToTemplateConverter {
         template.setInstanceType(Objects.requireNonNullElse(source.getInstanceType(), defaultInstanceTypeProvider.getForPlatform(cloudPlatform.name())));
         Optional.ofNullable(source.getAws())
                 .map(AwsInstanceTemplateParameters::getSpot)
-                .map(AwsInstanceTemplateSpotParameters::getPercentage)
-                .ifPresent(spotPercentage -> template.setAttributes(new Json(Map.of("spotPercentage", spotPercentage))));
+                .ifPresent(spotParameters -> {
+                            Map<String, Object> attributes = new HashMap<>();
+                            attributes.put("spotPercentage", spotParameters.getPercentage());
+                            if (Objects.nonNull(spotParameters.getMaxPrice())) {
+                                attributes.put("spotMaxPrice", spotParameters.getMaxPrice());
+                            }
+                            template.setAttributes(new Json(attributes));
+                        }
+                );
         return template;
     }
 

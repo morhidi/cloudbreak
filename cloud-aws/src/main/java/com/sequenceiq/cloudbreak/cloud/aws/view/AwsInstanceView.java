@@ -81,6 +81,10 @@ public class AwsInstanceView {
         return instanceTemplate.getParameter("spotPercentage", Integer.class);
     }
 
+    public Double getSpotMaxPrice() {
+        return instanceTemplate.getParameter("spotMaxPrice", Double.class);
+    }
+
     public int getOnDemandPercentage() {
         return HUNDRED_PERCENT - Objects.requireNonNullElse(getSpotPercentage(), 0);
     }

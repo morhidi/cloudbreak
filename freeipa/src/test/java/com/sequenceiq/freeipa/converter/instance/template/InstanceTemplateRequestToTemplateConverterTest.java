@@ -59,9 +59,11 @@ class InstanceTemplateRequestToTemplateConverterTest {
     @Test
     void shouldSetSpotPercentagePropertyWhenProvided() {
         int spotPercentage = 100;
+        double spotMaxPrice = 0.9;
 
         AwsInstanceTemplateSpotParameters spot = new AwsInstanceTemplateSpotParameters();
         spot.setPercentage(spotPercentage);
+        spot.setMaxPrice(spotMaxPrice);
         AwsInstanceTemplateParameters aws = new AwsInstanceTemplateParameters();
         aws.setSpot(spot);
 
@@ -73,6 +75,8 @@ class InstanceTemplateRequestToTemplateConverterTest {
 
         Object resultSpotPercentage = result.getAttributes().getValue("spotPercentage");
         Assertions.assertThat(resultSpotPercentage).isEqualTo(spotPercentage);
+        Object resultSpotMaxPrice = result.getAttributes().getValue("spotMaxPrice");
+        Assertions.assertThat(resultSpotMaxPrice).isEqualTo(spotMaxPrice);
     }
 
 }

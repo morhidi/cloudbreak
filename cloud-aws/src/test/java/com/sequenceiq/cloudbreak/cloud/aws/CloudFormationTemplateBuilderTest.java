@@ -813,6 +813,41 @@ public class CloudFormationTemplateBuilderTest {
         //THEN
         Assert.assertTrue("Invalid JSON: " + templateString, JsonUtil.isValid(templateString));
         assertThat(templateString, stringContainsInOrder("OnDemandPercentageAboveBaseCapacity", "40"));
+        assertThat(templateString, not(containsString("SpotMaxPrice")));
+    }
+
+    @Test
+    public void buildTestInstanceGroupsWithSpotInstancesWithMaxPrice() {
+        //GIVEN
+        List<Group> groups = new ArrayList<>();
+        Security security = getDefaultCloudStackSecurity();
+        groups.add(createDefaultGroup("master", InstanceGroupType.CORE, ROOT_VOLUME_SIZE, security, Optional.empty()));
+        InstanceTemplate spotInstanceTemplate = createDefaultInstanceTemplate();
+        spotInstanceTemplate.putParameter("spotPercentage", 60);
+        spotInstanceTemplate.putParameter("spotMaxPrice", 0.9);
+        CloudInstance spotInstance = new CloudInstance("SOME_ID", spotInstanceTemplate, instanceAuthentication);
+        groups.add(new Group("compute", InstanceGroupType.CORE, singletonList(spotInstance), security, spotInstance,
+                instanceAuthentication, instanceAuthentication.getLoginUserName(), "publickey", ROOT_VOLUME_SIZE, Optional.empty()));
+        groups.add(createDefaultGroup("gateway", InstanceGroupType.GATEWAY, ROOT_VOLUME_SIZE, security, Optional.empty()));
+        CloudStack cloudStack = createDefaultCloudStack(groups, getDefaultCloudStackParameters(), getDefaultCloudStackTags());
+
+        //WHEN
+        modelContext = new ModelContext()
+                .withAuthenticatedContext(authenticatedContext)
+                .withStack(cloudStack)
+                .withExistingVpc(true)
+                .withExistingIGW(true)
+                .withExistingSubnetCidr(singletonList(existingSubnetCidr))
+                .mapPublicIpOnLaunch(true)
+                .withEnableInstanceProfile(true)
+                .withInstanceProfileAvailable(true)
+                .withTemplate(awsCloudFormationTemplate);
+        String templateString = cloudFormationTemplateBuilder.build(modelContext);
+
+        //THEN
+        Assert.assertTrue("Invalid JSON: " + templateString, JsonUtil.isValid(templateString));
+        assertThat(templateString, stringContainsInOrder("OnDemandPercentageAboveBaseCapacity", "40"));
+        assertThat(templateString, stringContainsInOrder("SpotMaxPrice", "0.9"));
     }
 
     private CloudStack initCloudStackWithInstanceProfile() {

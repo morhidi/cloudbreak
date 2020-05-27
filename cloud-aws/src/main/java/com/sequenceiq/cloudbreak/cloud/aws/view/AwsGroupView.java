@@ -50,9 +50,12 @@ public class AwsGroupView {
 
     private final int onDemandPercentage;
 
+    private final Double spotMaxPrice;
+
     public AwsGroupView(Integer instanceCount, String type, String flavor, String groupName, Boolean ebsEncrypted, Integer rootVolumeSize,
             Map<String, Long> volumeCounts, List<SecurityRule> rules, List<String> cloudSecurityIds, String subnetId, Boolean kmsKeyDefined,
-            String kmsKey, String encryptedAMI, boolean useNetworkCidrAsSourceForDefaultRules, String instanceProfile, int onDemandPercentage) {
+            String kmsKey, String encryptedAMI, boolean useNetworkCidrAsSourceForDefaultRules, String instanceProfile, int onDemandPercentage,
+            Double spotMaxPrice) {
         this.instanceCount = instanceCount;
         this.type = type;
         this.flavor = flavor;
@@ -72,6 +75,7 @@ public class AwsGroupView {
         this.instanceProfile = instanceProfile;
         hasInstanceProfile = instanceProfile != null;
         this.onDemandPercentage = onDemandPercentage;
+        this.spotMaxPrice = spotMaxPrice;
     }
 
     public static String getAutoScalingGroupName(String groupName) {
@@ -172,5 +176,9 @@ public class AwsGroupView {
 
     public int getOnDemandPercentage() {
         return onDemandPercentage;
+    }
+
+    public Double getSpotMaxPrice() {
+        return spotMaxPrice;
     }
 }
