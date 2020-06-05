@@ -44,6 +44,9 @@ class MockGroupManagementService {
     @Inject
     private MockCrnService mockCrnService;
 
+    @Inject
+    private MockCloudIdentityService mockCloudIdentityService;
+
     private final Map<String, Map<String, Group>> accountWorkloadGroups = new ConcurrentHashMap<>();
 
     private final Map<String, Map<String, Group>> accountUserGroups = new ConcurrentHashMap<>();
@@ -119,6 +122,7 @@ class MockGroupManagementService {
                 .setGroupId(groupId)
                 .setCrn(groupCrn)
                 .setGroupName(groupName)
+                .addCloudIdentities(mockCloudIdentityService.createMockAzureCloudIdentity(groupName))
                 .build();
     }
 

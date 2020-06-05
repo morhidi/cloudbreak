@@ -200,6 +200,9 @@ public class MockUserManagementService extends UserManagementImplBase {
     private MockCrnService mockCrnService;
 
     @Inject
+    private MockCloudIdentityService mockCloudIdentityService;
+
+    @Inject
     private MockGroupManagementService mockGroupManagementService;
 
     @Value("#{'${auth.config.dir:}/${auth.license.file:}'}")
@@ -432,6 +435,7 @@ public class MockUserManagementService extends UserManagementImplBase {
                 .setCrn(userCrn)
                 .setEmail(userName.contains("@") ? userName : userName + "@ums.mock")
                 .setWorkloadUsername(sanitizeWorkloadUsername(userName))
+                .addCloudIdentities(mockCloudIdentityService.createMockAzureCloudIdentity(userName))
                 .build();
     }
 
