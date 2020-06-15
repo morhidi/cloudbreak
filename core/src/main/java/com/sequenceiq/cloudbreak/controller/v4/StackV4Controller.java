@@ -1,5 +1,7 @@
 package com.sequenceiq.cloudbreak.controller.v4;
 
+import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.response.dr.BackupV4Response;
+import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.response.dr.RestoreV4Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -192,4 +194,19 @@ public class StackV4Controller extends NotificationController implements StackV4
     public FlowIdentifier updateSaltByName(Long workspaceId, String name) {
         return stackOperations.updateSalt(NameOrCrn.ofName(name), workspaceId);
     }
+
+    @Override
+    public BackupV4Response backupDatabaseByName(Long workspaceId, String name, String location, String backupId) {
+        FlowIdentifier flowIdentifier =
+            stackOperations.backupClusterDatabase(NameOrCrn.ofName(name), workspaceId, location, backupId);
+        return new BackupV4Response(false, null, flowIdentifier);
+    }
+
+    @Override
+    public RestoreV4Response restoreDatabaseByName(Long workspaceId, String name, String location, String backupId) {
+        FlowIdentifier flowIdentifier =
+            stackOperations.restoreClusterDatabase(NameOrCrn.ofName(name), workspaceId, location, backupId);
+        return new RestoreV4Response(false, null, flowIdentifier);
+    }
+
 }

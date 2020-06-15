@@ -1,0 +1,144 @@
+package com.sequenceiq.cloudbreak.service;
+
+import com.sequenceiq.cloudbreak.api.endpoint.v4.dto.NameOrCrn;
+import com.sequenceiq.cloudbreak.common.service.TransactionService;
+import com.sequenceiq.cloudbreak.core.flow2.service.ReactorFlowManager;
+import com.sequenceiq.cloudbreak.domain.Blueprint;
+import com.sequenceiq.cloudbreak.domain.stack.Stack;
+import com.sequenceiq.cloudbreak.domain.stack.cluster.Cluster;
+import com.sequenceiq.cloudbreak.exception.BadRequestException;
+import com.sequenceiq.cloudbreak.service.stack.StackService;
+import com.sequenceiq.cloudbreak.structuredevent.event.CloudbreakEventService;
+import com.sequenceiq.flow.api.model.FlowIdentifier;
+import com.sequenceiq.flow.core.FlowLogService;
+import com.sequenceiq.flow.domain.FlowLog;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.rules.ExpectedException;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+public class DatabaseBackupRestoreServiceTest {
+
+    private static final String CLUSTER_NAME = "cluster-name";
+
+    private static final String CLUSTER_CRN = "cluster-crn";
+
+    private static final long WORKSPACE_ID = 0L;
+
+    private static final String BACKUP_ACTIVE_FLOW_EXCEPTION_MESSAGE = "Database backup cannot be performed because " +
+        "there is an active flow running: ";
+
+    private static final String RESTORE_ACTIVE_FLOW_EXCEPTION_MESSAGE = "Database restore cannot be performed because " +
+        "there is an active flow running: ";
+
+    @Rule
+    public final ExpectedException expectedException = ExpectedException.none();
+
+    private final NameOrCrn ofName = NameOrCrn.ofName(CLUSTER_NAME);
+
+    private final NameOrCrn ofCrn = NameOrCrn.ofName(CLUSTER_CRN);
+
+    @Mock
+    private ReactorFlowManager flowManager;
+
+    @Mock
+    private TransactionService transactionService;
+
+    @Mock
+    private StackService stackService;
+
+    @Mock
+    private FlowLogService flowLogService;
+
+    @Mock
+    private CloudbreakEventService eventService;
+
+    @InjectMocks
+    private DatabaseBackupRestoreService service;
+
+    @Before
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @Test
+    public void testSuccessfulBackup() {
+        Stack stack = getStack();
+
+        when(stackService.findStackByNameAndWorkspaceId(any(), anyLong())).thenReturn(Optional.of(stack));
+        when(flowLogService.findAllByResourceIdAndFinalizedIsFalseOrderByCreatedDesc(1L)).thenReturn(Collections.EMPTY_LIST);
+        when(flowManager.triggerDatalakeDatabaseBackup(anyLong(), any(), any())).thenReturn(FlowIdentifier.notTriggered());
+
+        service.backupDatabase(WORKSPACE_ID, CLUSTER_NAME, null, null);
+    }
+
+    @Test
+    public void testBackupFailureIfActiveFlow() {
+        Stack stack = getStack();
+        List<FlowLog> flowLogs = new ArrayList<>();
+        flowLogs.add(new FlowLog());
+
+        when(stackService.findStackByNameAndWorkspaceId(any(), anyLong())).thenReturn(Optional.of(stack));
+        when(flowLogService.findAllByResourceIdAndFinalizedIsFalseOrderByCreatedDesc(1L)).thenReturn(flowLogs);
+
+        expectedException.expect(BadRequestException.class);
+        expectedException.expectMessage(BACKUP_ACTIVE_FLOW_EXCEPTION_MESSAGE);
+
+        service.backupDatabase(WORKSPACE_ID, CLUSTER_NAME, null, null);
+    }
+
+    @Test
+    public void testSuccessfulRestore() {
+        Stack stack = getStack();
+
+        when(stackService.findStackByNameAndWorkspaceId(any(), anyLong())).thenReturn(Optional.of(stack));
+        when(flowLogService.findAllByResourceIdAndFinalizedIsFalseOrderByCreatedDesc(1L)).thenReturn(Collections.EMPTY_LIST);
+        when(flowManager.triggerDatalakeDatabaseRestore(anyLong(), any(), any())).thenReturn(FlowIdentifier.notTriggered());
+
+        service.restoreDatabase(WORKSPACE_ID, CLUSTER_NAME, null, null);
+    }
+
+    @Test
+    public void testRestoreFailureIfActiveFlow() {
+        Stack stack = getStack();
+        List<FlowLog> flowLogs = new ArrayList<>();
+        flowLogs.add(new FlowLog());
+
+        when(stackService.findStackByNameAndWorkspaceId(any(), anyLong())).thenReturn(Optional.of(stack));
+        when(flowLogService.findAllByResourceIdAndFinalizedIsFalseOrderByCreatedDesc(1L)).thenReturn(flowLogs);
+
+        expectedException.expect(BadRequestException.class);
+        expectedException.expectMessage(RESTORE_ACTIVE_FLOW_EXCEPTION_MESSAGE);
+
+        service.restoreDatabase(WORKSPACE_ID, CLUSTER_NAME, null, null);
+    }
+
+    private Stack getStack() {
+        Stack stack = new Stack();
+        stack.setId(1L);
+        stack.setEnvironmentCrn("env-crn");
+        stack.setCloudPlatform("AWS");
+        stack.setPlatformVariant("AWS");
+        stack.setRegion("eu-central-1");
+        Blueprint blueprint = new Blueprint();
+        Cluster cluster = new Cluster();
+        cluster.setId(1L);
+        cluster.setBlueprint(blueprint);
+        stack.setCluster(cluster);
+        return stack;
+    }
+}

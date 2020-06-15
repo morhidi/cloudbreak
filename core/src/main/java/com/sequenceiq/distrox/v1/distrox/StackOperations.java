@@ -1,19 +1,5 @@
 package com.sequenceiq.distrox.v1.distrox;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import javax.inject.Inject;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.BadRequestException;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
 import com.sequenceiq.authorization.resource.AuthorizationResourceType;
 import com.sequenceiq.authorization.service.ResourceBasedCrnProvider;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.common.StackType;
@@ -43,6 +29,7 @@ import com.sequenceiq.cloudbreak.domain.view.StackApiView;
 import com.sequenceiq.cloudbreak.retry.RetryableFlow;
 import com.sequenceiq.cloudbreak.service.CloudbreakRestRequestThreadLocalService;
 import com.sequenceiq.cloudbreak.service.ClusterCommonService;
+import com.sequenceiq.cloudbreak.service.DatabaseBackupRestoreService;
 import com.sequenceiq.cloudbreak.service.StackCommonService;
 import com.sequenceiq.cloudbreak.service.stack.StackApiViewService;
 import com.sequenceiq.cloudbreak.service.stack.StackService;
@@ -55,6 +42,17 @@ import com.sequenceiq.cloudbreak.workspace.model.Workspace;
 import com.sequenceiq.distrox.v1.distrox.service.EnvironmentServiceDecorator;
 import com.sequenceiq.distrox.v1.distrox.service.SdxServiceDecorator;
 import com.sequenceiq.flow.api.model.FlowIdentifier;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import javax.inject.Inject;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.BadRequestException;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 @Service
 public class StackOperations implements ResourceBasedCrnProvider {
@@ -99,6 +97,9 @@ public class StackOperations implements ResourceBasedCrnProvider {
 
     @Inject
     private GrpcUmsClient grpcUmsClient;
+
+    @Inject
+    private DatabaseBackupRestoreService databaseBackupRestoreService;
 
     public StackViewV4Responses listByEnvironmentName(Long workspaceId, String environmentName, List<StackType> stackTypes) {
         Set<StackViewV4Response> stackViewResponses;
@@ -319,6 +320,26 @@ public class StackOperations implements ResourceBasedCrnProvider {
 
     public List<RetryableFlow> getRetryableFlows(String name, Long workspaceId) {
         return stackCommonService.getRetryableFlows(name, workspaceId);
+    }
+
+    public FlowIdentifier backupClusterDatabase(@NotNull NameOrCrn nameOrCrn, Long workspaceId, String location, String backupId) {
+        LOGGER.debug("Starting cluster database backup: " + nameOrCrn);
+        if (nameOrCrn.hasName()) {
+            return databaseBackupRestoreService.backupDatabase(workspaceId, nameOrCrn.getName(), location, backupId);
+        } else {
+            LOGGER.debug("No stack name provided for backup, found: " + nameOrCrn);
+            throw new BadRequestException("Please provide a stack name for backup");
+        }
+    }
+
+    public FlowIdentifier restoreClusterDatabase(@NotNull NameOrCrn nameOrCrn, Long workspaceId, String location, String backupId) {
+        LOGGER.debug("Starting cluster database restore: " + nameOrCrn);
+        if (nameOrCrn.hasName()) {
+            return databaseBackupRestoreService.restoreDatabase(workspaceId, nameOrCrn.getName(), location, backupId);
+        } else {
+            LOGGER.debug("No stack name provided for restore, found: " + nameOrCrn);
+            throw new BadRequestException("Please provide a stack name for restore");
+        }
     }
 
     @Override

@@ -1,38 +1,5 @@
 package com.sequenceiq.cloudbreak.orchestrator.salt;
 
-import static com.sequenceiq.cloudbreak.common.type.OrchestratorConstants.SALT;
-import static com.sequenceiq.cloudbreak.common.type.RecipeExecutionPhase.PRE_CLOUDERA_MANAGER_START;
-import static com.sequenceiq.cloudbreak.common.type.RecipeExecutionPhase.convert;
-import static com.sequenceiq.cloudbreak.util.FileReaderUtils.readFileFromClasspath;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.retry.annotation.Retryable;
-import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
@@ -78,8 +45,37 @@ import com.sequenceiq.cloudbreak.orchestrator.salt.utils.GrainsJsonPropertyUtil;
 import com.sequenceiq.cloudbreak.orchestrator.state.ExitCriteria;
 import com.sequenceiq.cloudbreak.orchestrator.state.ExitCriteriaModel;
 import com.sequenceiq.cloudbreak.util.CompressUtil;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
+import static com.sequenceiq.cloudbreak.common.type.OrchestratorConstants.SALT;
+import static com.sequenceiq.cloudbreak.common.type.RecipeExecutionPhase.PRE_CLOUDERA_MANAGER_START;
+import static com.sequenceiq.cloudbreak.common.type.RecipeExecutionPhase.convert;
+import static com.sequenceiq.cloudbreak.util.FileReaderUtils.readFileFromClasspath;
 
 @Component
 public class SaltOrchestrator implements HostOrchestrator {
@@ -87,6 +83,10 @@ public class SaltOrchestrator implements HostOrchestrator {
     private static final int SLEEP_TIME = 10000;
 
     private static final int SLEEP_TIME_IN_SEC = SLEEP_TIME / 1000;
+
+    private static final String DATABASE_BACKUP = "postgresql.disaster_recovery.backup";
+
+    private static final String DATABASE_RESTORE = "postgresql.disaster_recovery.restore";
 
     private static final String DISK_INITIALIZE = "format-and-mount-initialize.sh";
 
@@ -853,6 +853,46 @@ public class SaltOrchestrator implements HostOrchestrator {
     public Map<String, String> getMembers(GatewayConfig gatewayConfig, List<String> privateIps) throws CloudbreakOrchestratorException {
         try (SaltConnector saltConnector = createSaltConnector(gatewayConfig)) {
             return saltConnector.members(privateIps);
+        }
+    }
+
+    @Override
+    public void backupDatabase(GatewayConfig primaryGateway, Set<String> target, Set<Node> allNodes, SaltConfig saltConfig,
+            ExitCriteriaModel exitModel) throws CloudbreakOrchestratorFailedException {
+        try (SaltConnector sc = createSaltConnector(primaryGateway)) {
+            for (Entry<String, SaltPillarProperties> propertiesEntry : saltConfig.getServicePillarConfig().entrySet()) {
+                OrchestratorBootstrap pillarSave = new PillarSave(sc, Sets.newHashSet(primaryGateway.getPrivateAddress()), propertiesEntry.getValue());
+                Callable<Boolean> saltPillarRunner = saltRunner.runner(pillarSave, exitCriteria, exitModel);
+                saltPillarRunner.call();
+            }
+
+            StateRunner stateRunner = new StateRunner(target, allNodes, DATABASE_BACKUP);
+            OrchestratorBootstrap saltJobIdTracker = new SaltJobIdTracker(sc, stateRunner);
+            Callable<Boolean> saltJobRunBootstrapRunner = saltRunner.runner(saltJobIdTracker, exitCriteria, exitModel, maxTelemetryStopRetry, false);
+            saltJobRunBootstrapRunner.call();
+        } catch (Exception e) {
+            LOGGER.info("Error occurred during database backup", e);
+            throw new CloudbreakOrchestratorFailedException(e);
+        }
+    }
+
+    @Override
+    public void restoreDatabase(GatewayConfig primaryGateway, Set<String> target, Set<Node> allNodes, SaltConfig saltConfig,
+            ExitCriteriaModel exitModel) throws CloudbreakOrchestratorFailedException {
+        try (SaltConnector sc = createSaltConnector(primaryGateway)) {
+            for (Entry<String, SaltPillarProperties> propertiesEntry : saltConfig.getServicePillarConfig().entrySet()) {
+                OrchestratorBootstrap pillarSave = new PillarSave(sc, Sets.newHashSet(primaryGateway.getPrivateAddress()), propertiesEntry.getValue());
+                Callable<Boolean> saltPillarRunner = saltRunner.runner(pillarSave, exitCriteria, exitModel);
+                saltPillarRunner.call();
+            }
+
+            StateRunner stateRunner = new StateRunner(target, allNodes, DATABASE_RESTORE);
+            OrchestratorBootstrap saltJobIdTracker = new SaltJobIdTracker(sc, stateRunner);
+            Callable<Boolean> saltJobRunBootstrapRunner = saltRunner.runner(saltJobIdTracker, exitCriteria, exitModel, maxTelemetryStopRetry, false);
+            saltJobRunBootstrapRunner.call();
+        } catch (Exception e) {
+            LOGGER.info("Error occurred during database restore", e);
+            throw new CloudbreakOrchestratorFailedException(e);
         }
     }
 
