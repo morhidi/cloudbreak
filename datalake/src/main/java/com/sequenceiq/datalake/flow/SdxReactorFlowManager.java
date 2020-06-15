@@ -97,16 +97,16 @@ public class SdxReactorFlowManager {
         return notify(selector, new SdxStartStopEvent(selector, sdxId, userId));
     }
 
-    public String triggerDatalakeDatabaseBackupFlow(Long sdxId, String databaseHost, String backupLocation) {
+    public String triggerDatalakeDatabaseBackupFlow(Long sdxId, String databaseHost, String backupId, String backupLocation) {
         String selector = DATALAKE_DATABASE_BACKUP_EVENT.event();
         String userId = ThreadBasedUserCrnProvider.getUserCrn();
-        return notifyDatabaseDrEvent(selector, new DatalakeDatabaseBackupStartEvent(selector, sdxId, userId, databaseHost, backupLocation));
+        return notifyDatabaseDrEvent(selector, new DatalakeDatabaseBackupStartEvent(selector, sdxId, userId, databaseHost, backupId, backupLocation));
     }
 
-    public String triggerDatalakeDatabaseRestoreFlow(Long sdxId, String databaseHost, String backupLocation) {
+    public String triggerDatalakeDatabaseRestoreFlow(Long sdxId, String databaseHost, String backupId, String backupLocation) {
         String selector = DATALAKE_DATABASE_RESTORE_EVENT.event();
         String userId = ThreadBasedUserCrnProvider.getUserCrn();
-        return notifyDatabaseDrEvent(selector, new DatalakeDatabaseRestoreStartEvent(selector, sdxId, userId, databaseHost, backupLocation));
+        return notifyDatabaseDrEvent(selector, new DatalakeDatabaseRestoreStartEvent(selector, sdxId, userId, databaseHost, backupId, backupLocation));
     }
 
     private FlowIdentifier notify(String selector, SdxEvent acceptable) {

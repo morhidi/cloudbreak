@@ -173,13 +173,13 @@ public interface SdxEndpoint {
     @Path("{name}/backupDatabase")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "backup the database backing datalake ", produces = MediaType.APPLICATION_JSON, nickname = "backupDatabase")
-    SdxDatabaseBackupResponse backupDatabase(@PathParam("name") String name, @QueryParam("backupLocation") String backupLocation);
+    SdxDatabaseBackupResponse backupDatabase(@PathParam("name") String name, @QueryParam("backupId") String backupId, @QueryParam("backupLocation") String backupLocation);
 
     @POST
     @Path("{name}/restoreDatabase")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "restore the database backing datalake ", produces = MediaType.APPLICATION_JSON, nickname = "restoreDatabase")
-    SdxDatabaseRestoreResponse restoreDatabase(@PathParam("name") String name, @QueryParam("backupLocation") String backupLocation);
+    SdxDatabaseRestoreResponse restoreDatabase(@PathParam("name") String name, @QueryParam("backupId") String backupId, @QueryParam("backupLocation") String backupLocation);
 
     @GET
     @Path("{name}/backupDatabaseStatus")

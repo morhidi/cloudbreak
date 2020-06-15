@@ -249,18 +249,18 @@ public class SdxController implements SdxEndpoint {
 
     @Override
     @CheckPermissionByAccount(action = AuthorizationResourceAction.DATALAKE_READ)
-    public SdxDatabaseBackupResponse backupDatabase(String name, String backupLocation) {
+    public SdxDatabaseBackupResponse backupDatabase(String name, String backupId, String backupLocation) {
         String userCrn = ThreadBasedUserCrnProvider.getUserCrn();
         SdxCluster sdxCluster = sdxService.getSdxByNameInAccount(userCrn, name);
-        return sdxDrService.triggerDatabaseBackup(sdxCluster, backupLocation);
+        return sdxDrService.triggerDatabaseBackup(sdxCluster, backupId, backupLocation);
     }
 
     @Override
     @CheckPermissionByAccount(action = AuthorizationResourceAction.DATALAKE_WRITE)
-    public SdxDatabaseRestoreResponse restoreDatabase(String name, String backupLocation) {
+    public SdxDatabaseRestoreResponse restoreDatabase(String name, String backupId, String backupLocation) {
         String userCrn = ThreadBasedUserCrnProvider.getUserCrn();
         SdxCluster sdxCluster = sdxService.getSdxByNameInAccount(userCrn, name);
-        return sdxDrService.triggerDatabaseRestore(sdxCluster, backupLocation);
+        return sdxDrService.triggerDatabaseRestore(sdxCluster, backupId, backupLocation);
     }
 
     @Override

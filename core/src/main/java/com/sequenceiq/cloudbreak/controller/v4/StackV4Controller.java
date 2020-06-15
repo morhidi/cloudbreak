@@ -196,12 +196,12 @@ public class StackV4Controller extends NotificationController implements StackV4
     }
 
     @Override
-    public BackupV4Response backupDatabase(Long workspaceId, String name, String backupLocation) {
+    public BackupV4Response backupDatabase(Long workspaceId, String name, String backupLocation, String backupId) {
         return null;
     }
 
     @Override
-    public RestoreV4Response restoreDatabase(Long workspaceId, String name, String backupLocation) {
+    public RestoreV4Response restoreDatabase(Long workspaceId, String name, String backupLocation, String backupId) {
         return null;
     }
 }

@@ -41,6 +41,8 @@ import com.sequenceiq.sdx.api.model.SdxDatabaseRestoreResponse;
 public class SdxDrServiceTest {
     private static final String ACCOUNT_ID = UUID.randomUUID().toString();
 
+    private static final String BACKUPID = UUID.randomUUID().toString();
+
     private static final String BACKUPLOCATION = "location/of/backup";
 
     private static final String DBHOST = "loclhost";
@@ -91,37 +93,37 @@ public class SdxDrServiceTest {
     @Test
     public void triggerDatabaseBackupSuccess() {
         when(databaseServerV4Endpoint.getByCrn(anyString())).thenReturn(getValidDatabaseServerV4Response());
-        when(sdxReactorFlowManager.triggerDatalakeDatabaseBackupFlow(anyLong(), anyString(), anyString())).thenReturn(BACKUP_OPERATION_ID);
-        SdxDatabaseBackupResponse backupResponse = sdxDrService.triggerDatabaseBackup(sdxCluster, BACKUPLOCATION);
+        when(sdxReactorFlowManager.triggerDatalakeDatabaseBackupFlow(anyLong(), anyString(), anyString(), anyString())).thenReturn(BACKUP_OPERATION_ID);
+        SdxDatabaseBackupResponse backupResponse = sdxDrService.triggerDatabaseBackup(sdxCluster, BACKUPID, BACKUPLOCATION);
         Assert.assertEquals(BACKUP_OPERATION_ID, backupResponse.getOperationId());
-        verify(sdxReactorFlowManager, times(1)).triggerDatalakeDatabaseBackupFlow(1L, DBHOST, BACKUPLOCATION);
+        verify(sdxReactorFlowManager, times(1)).triggerDatalakeDatabaseBackupFlow(1L, DBHOST, BACKUPID, BACKUPLOCATION);
     }
 
     @Test
     public void triggerDatabaseRestoreSuccess() {
         when(databaseServerV4Endpoint.getByCrn(anyString())).thenReturn(getValidDatabaseServerV4Response());
-        when(sdxReactorFlowManager.triggerDatalakeDatabaseRestoreFlow(anyLong(), anyString(), anyString())).thenReturn(RESTORE_OPERATION_ID);
-        SdxDatabaseRestoreResponse restoreResponse = sdxDrService.triggerDatabaseRestore(sdxCluster, BACKUPLOCATION);
+        when(sdxReactorFlowManager.triggerDatalakeDatabaseRestoreFlow(anyLong(), anyString(), anyString(), anyString())).thenReturn(RESTORE_OPERATION_ID);
+        SdxDatabaseRestoreResponse restoreResponse = sdxDrService.triggerDatabaseRestore(sdxCluster, BACKUPID, BACKUPLOCATION);
         Assert.assertEquals(RESTORE_OPERATION_ID, restoreResponse.getOperationId());
-        verify(sdxReactorFlowManager, times(1)).triggerDatalakeDatabaseRestoreFlow(1L, DBHOST, BACKUPLOCATION);
+        verify(sdxReactorFlowManager, times(1)).triggerDatalakeDatabaseRestoreFlow(1L, DBHOST, BACKUPID, BACKUPLOCATION);
     }
 
     @Test
     public void triggerDatabaseBackupFailure() {
         BadRequestException exception = Assertions.assertThrows(
                 BadRequestException.class,
-                () -> sdxDrService.triggerDatabaseBackup(sdxCluster, BACKUPLOCATION));
+                () -> sdxDrService.triggerDatabaseBackup(sdxCluster, BACKUPID, BACKUPLOCATION));
         assertEquals("Invalid backup request, Datalake with Crn: " + "crn:sdxcluster" + " not found", exception.getMessage());
-        verify(sdxReactorFlowManager, times(0)).triggerDatalakeDatabaseBackupFlow(1L, DBHOST, BACKUPLOCATION);
+        verify(sdxReactorFlowManager, times(0)).triggerDatalakeDatabaseBackupFlow(1L, DBHOST, BACKUPID, BACKUPLOCATION);
     }
 
     @Test
     public void triggerDatabaseRestoreFailure() {
         BadRequestException exception = Assertions.assertThrows(
                 BadRequestException.class,
-                () -> sdxDrService.triggerDatabaseRestore(sdxCluster, BACKUPLOCATION));
+                () -> sdxDrService.triggerDatabaseRestore(sdxCluster, BACKUPID, BACKUPLOCATION));
         assertEquals("Invalid restore request, Datalake with Crn: " + "crn:sdxcluster" + " not found", exception.getMessage());
-        verify(sdxReactorFlowManager, times(0)).triggerDatalakeDatabaseRestoreFlow(1L, DBHOST, BACKUPLOCATION);
+        verify(sdxReactorFlowManager, times(0)).triggerDatalakeDatabaseRestoreFlow(1L, DBHOST, BACKUPID, BACKUPLOCATION);
     }
 
     private SdxCluster getValidSdxCluster() {

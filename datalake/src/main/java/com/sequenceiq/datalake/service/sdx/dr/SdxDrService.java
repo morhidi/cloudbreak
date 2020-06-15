@@ -75,7 +75,7 @@ public class SdxDrService {
     @Inject
     private SDxDatabaseDrStatusRepository sdxDatabaseDrStatusRepository;
 
-    public SdxDatabaseBackupResponse triggerDatabaseBackup(SdxCluster sdxCluster, String backupLocation) {
+    public SdxDatabaseBackupResponse triggerDatabaseBackup(SdxCluster sdxCluster, String backupId, String backupLocation) {
         // Identifying the database host talking to database service.
         String databaseCrn = sdxCluster.getDatabaseCrn();
         DatabaseServerV4Response databaseServerResponse =  databaseServerV4Endpoint.getByCrn(databaseCrn);
@@ -84,11 +84,11 @@ public class SdxDrService {
         }
         String databaseHost = databaseServerResponse.getHost();
 
-        String operationId = triggerDatalakeDatabaseBackupFlow(sdxCluster.getId(), databaseHost, backupLocation);
+        String operationId = triggerDatalakeDatabaseBackupFlow(sdxCluster.getId(), databaseHost, backupId, backupLocation);
         return new SdxDatabaseBackupResponse(operationId);
     }
 
-    public SdxDatabaseRestoreResponse triggerDatabaseRestore(SdxCluster sdxCluster, String backupLocation) {
+    public SdxDatabaseRestoreResponse triggerDatabaseRestore(SdxCluster sdxCluster, String backupId, String backupLocation) {
         // Identifying the database host talking to database service.
         String databaseCrn = sdxCluster.getDatabaseCrn();
         DatabaseServerV4Response databaseServerResponse =  databaseServerV4Endpoint.getByCrn(databaseCrn);
@@ -97,26 +97,26 @@ public class SdxDrService {
         }
         String databaseHost = databaseServerResponse.getHost();
 
-        String operationId = triggerDatalakeDatabaseRestoreFlow(sdxCluster.getId(), databaseHost, backupLocation);
+        String operationId = triggerDatalakeDatabaseRestoreFlow(sdxCluster.getId(), databaseHost, backupId, backupLocation);
         return new SdxDatabaseRestoreResponse(operationId);
 
     }
 
-    private String triggerDatalakeDatabaseBackupFlow(Long clusterId, String databaseHost, String backupLocation) {
+    private String triggerDatalakeDatabaseBackupFlow(Long clusterId, String databaseHost, String backupId, String backupLocation) {
         MDCBuilder.buildMdcContext(databaseHost);
-        return sdxReactorFlowManager.triggerDatalakeDatabaseBackupFlow(clusterId, databaseHost, backupLocation);
+        return sdxReactorFlowManager.triggerDatalakeDatabaseBackupFlow(clusterId, databaseHost, backupId, backupLocation);
     }
 
-    private String triggerDatalakeDatabaseRestoreFlow(Long clusterId, String databaseHost, String backupLocation) {
+    private String triggerDatalakeDatabaseRestoreFlow(Long clusterId, String databaseHost, String backupId, String backupLocation) {
         MDCBuilder.buildMdcContext(databaseHost);
-        return sdxReactorFlowManager.triggerDatalakeDatabaseRestoreFlow(clusterId, databaseHost, backupLocation);
+        return sdxReactorFlowManager.triggerDatalakeDatabaseRestoreFlow(clusterId, databaseHost, backupId, backupLocation);
     }
 
-    public void databaseBackup(SdxDatabaseDrStatus drStatus, Long clusterId, String databaseHost, String backupLocation) {
+    public void databaseBackup(SdxDatabaseDrStatus drStatus, Long clusterId, String databaseHost, String backupId, String backupLocation) {
         SdxCluster sdxCluster = sdxClusterRepository.findById(clusterId).orElseThrow(() -> new NotFoundException("Datalake with id: " + clusterId));
         try {
             sdxDatabaseDrStatusRepository.save(drStatus);
-            BackupV4Response backupV4Response = stackV4Endpoint.backupDatabase(0L, databaseHost, backupLocation);
+            BackupV4Response backupV4Response = stackV4Endpoint.backupDatabase(0L, databaseHost, backupLocation, backupId);
             // TODO remove below stub code after the initial review is complete.
             // BackupV4Response backupV4Response = new BackupV4Response(true, "dummy reason", new FlowIdentifier(FlowType.FLOW, "pollableId"));
             cloudbreakFlowService.saveLastCloudbreakFlowChainId(sdxCluster, backupV4Response.getFlowIdentifier());
@@ -127,12 +127,12 @@ public class SdxDrService {
         }
     }
 
-    public void databaseRestore(SdxDatabaseDrStatus drStatus, Long clusterId, String databaseHost, String backupLocation) {
+    public void databaseRestore(SdxDatabaseDrStatus drStatus, Long clusterId, String databaseHost, String backupId, String backupLocation) {
         SdxCluster sdxCluster = sdxClusterRepository.findById(clusterId).orElseThrow(() -> new NotFoundException("Datalake with id: " + clusterId));
         try {
             sdxDatabaseDrStatusRepository.save(drStatus);
-            RestoreV4Response restoreV4Response = stackV4Endpoint.restoreDatabase(0L, databaseHost, backupLocation);
-            // TODO remove below stub code after the initial review is complete.
+            RestoreV4Response restoreV4Response = stackV4Endpoint.restoreDatabase(0L, databaseHost, backupLocation, backupId);
+            // TODO remove below stub code after the initial review is complete
 //             RestoreV4Response restoreV4Response = new RestoreV4Response(true, "dummy reason", new FlowIdentifier(FlowType.FLOW, "pollableId"));
             cloudbreakFlowService.saveLastCloudbreakFlowChainId(sdxCluster, restoreV4Response.getFlowIdentifier());
             updateDatabaseStatusEntry(drStatus.getOperationId(), SdxDatabaseDrStatus.Status.TRIGGERRED, null);

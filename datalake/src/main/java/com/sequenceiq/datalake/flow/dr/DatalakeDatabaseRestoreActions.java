@@ -57,7 +57,11 @@ public class DatalakeDatabaseRestoreActions {
             @Override
             protected void doExecute(SdxContext context, DatalakeDatabaseRestoreStartEvent payload, Map<Object, Object> variables) throws Exception {
                 LOGGER.info("Datalake database restore has been started for {}", payload.getResourceId());
-                sdxDrService.databaseRestore(payload.getDrStatus(), payload.getResourceId(), payload.getDatabaseHost(), payload.getBackupLocation());
+                sdxDrService.databaseRestore(payload.getDrStatus(),
+                        payload.getResourceId(),
+                        payload.getDatabaseHost(),
+                        payload.getBackupId(),
+                        payload.getBackupLocation());
                 sendEvent(context, DATALAKE_DATABASE_RESTORE_IN_PROGRESS_EVENT.event(), payload);
             }
 

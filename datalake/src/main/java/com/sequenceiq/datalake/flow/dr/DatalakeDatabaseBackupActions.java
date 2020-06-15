@@ -58,7 +58,11 @@ public class DatalakeDatabaseBackupActions {
             @Override
             protected void doExecute(SdxContext context, DatalakeDatabaseBackupStartEvent payload, Map<Object, Object> variables) throws Exception {
                 LOGGER.info("Datalake database backup has been started for {}", payload.getResourceId());
-                sdxDrService.databaseBackup(payload.getDrStatus(), payload.getResourceId(), payload.getDatabaseHost(), payload.getBackupLocation());
+                sdxDrService.databaseBackup(payload.getDrStatus(),
+                        payload.getResourceId(),
+                        payload.getDatabaseHost(),
+                        payload.getBackupId(),
+                        payload.getBackupLocation());
                 sendEvent(context, DATALAKE_DATABASE_BACKUP_IN_PROGRESS_EVENT.event(), payload);
             }
 
