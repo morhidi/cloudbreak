@@ -710,6 +710,21 @@ public class SaltOrchestrator implements HostOrchestrator {
         }
     }
 
+    @Override
+    public void collectLogs(List<GatewayConfig> gatewayConfigs, Map<String, String> nodePrivateIPsByFQDN, Set<Node> nodes, ExitCriteriaModel exitCriteriaModel) throws CloudbreakOrchestratorFailedException {
+        GatewayConfig primaryGateway = getPrimaryGatewayConfig(gatewayConfigs);
+        Set<String> allTargets = nodes.stream().map(Node::getHostname).collect(Collectors.toSet());
+        Target<String> allHosts = new HostList(nodes.stream().map(Node::getHostname).collect(Collectors.toSet()));
+        try (SaltConnector sc = createSaltConnector(primaryGateway)) {
+            uploadMountScriptsAndMakeThemExecutable(nodes, exitCriteriaModel, allTargets, allHosts, sc);
+
+            SaltStates.runCommandOnHosts(sc, allHosts, "echo Hello");
+        } catch (Exception e) {
+            LOGGER.info("Error occurred during the salt bootstrap", e);
+            throw new CloudbreakOrchestratorFailedException(e);
+        }
+    }
+
     private Long calculateRecipeExecutionTimeout() {
         return SLEEP_TIME_IN_SEC * (maxRetryRecipe - 2L);
     }

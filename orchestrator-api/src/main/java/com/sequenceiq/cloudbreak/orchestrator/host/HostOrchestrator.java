@@ -99,4 +99,6 @@ public interface HostOrchestrator extends HostRecipeExecutor {
 
     Map<String, Map<String, String>> formatAndMountDisksOnNodesLegacy(List<GatewayConfig> gatewayConfigs, Set<Node> nodes, Set<Node> allNodes,
             ExitCriteriaModel exitCriteriaModel, String platformVariant) throws CloudbreakOrchestratorFailedException;
+
+    void collectLogs(List<GatewayConfig> gatewayConfigs, Map<String, String> nodePrivateIPsByFQDN, Set<Node> nodes, ExitCriteriaModel stackBasedExitCriteriaModel) throws CloudbreakOrchestratorFailedException;
 }
