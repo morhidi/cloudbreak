@@ -277,6 +277,18 @@ public interface StackV4Endpoint {
     @Path("{name}/database_backup")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = DATABASE_BACKUP, nickname = "databaseBackup")
+    BackupV4Response backupDatabaseByName(@PathParam("workspaceId") Long workspaceId, @PathParam("name") String name,
+            @QueryParam("location") String location, @QueryParam("backupId") String backupId);
+
+    @POST
+    @Path("{name}/database_restore")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = DATABASE_RESTORE, nickname = "databaseRestore")
+    RestoreV4Response restoreDatabaseByName(@PathParam("workspaceId") Long workspaceId, @PathParam("name") String name,
+            @QueryParam("location") String location, @QueryParam("backupId") String backupId);
+    @Path("{name}/database_backup")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = DATABASE_BACKUP, nickname = "databaseBackup")
     BackupV4Response backupDatabase(@PathParam("workspaceId") Long workspaceId, @PathParam("name") String name,
             String backupLocation, String backupId);
 
