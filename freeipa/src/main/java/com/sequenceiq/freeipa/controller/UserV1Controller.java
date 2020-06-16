@@ -14,7 +14,9 @@ import org.springframework.stereotype.Controller;
 import com.sequenceiq.authorization.annotation.AuthorizationResource;
 import com.sequenceiq.authorization.annotation.CheckPermissionByAccount;
 import com.sequenceiq.authorization.annotation.CheckPermissionByResourceCrn;
+import com.sequenceiq.authorization.annotation.CheckPermissionByResourceObject;
 import com.sequenceiq.authorization.annotation.ResourceCrn;
+import com.sequenceiq.authorization.annotation.ResourceObject;
 import com.sequenceiq.authorization.resource.AuthorizationResourceAction;
 import com.sequenceiq.cloudbreak.auth.ThreadBasedUserCrnProvider;
 import com.sequenceiq.cloudbreak.auth.altus.Crn;
@@ -59,14 +61,11 @@ public class UserV1Controller implements UserV1Endpoint {
     private EnvironmentUserSyncStateCalculator environmentUserSyncStateCalculator;
 
     @Override
-    // TODO we need to handle the case when environments is empty and the sync will applied to all env in account
-    // until that resource based authz cannot be applied
-    @CheckPermissionByAccount(action = AuthorizationResourceAction.ENVIRONMENT_READ)
-    public SyncOperationStatus synchronizeUser(SynchronizeUserRequest request) {
+    @CheckPermissionByResourceObject
+    public SyncOperationStatus synchronizeUser(@ResourceObject SynchronizeUserRequest request) {
         String userCrn = checkActorCrn();
         String accountId = ThreadBasedUserCrnProvider.getAccountId();
         LOGGER.debug("synchronizeUser() requested for user {} in account {}", userCrn, accountId);
-        Set<String> environmentCrnFilter = request == null ? Set.of() : nullToEmpty(request.getEnvironments());
         Set<String> userCrnFilter = Set.of();
         Set<String> machineUserCrnFilter = Set.of();
         Crn crn = Crn.safeFromString(userCrn);
@@ -82,15 +81,13 @@ public class UserV1Controller implements UserV1Endpoint {
         }
         return checkOperationRejected(
                 operationToSyncOperationStatus.convert(
-                        userSyncService.synchronizeUsers(accountId, userCrn, environmentCrnFilter,
+                        userSyncService.synchronizeUsers(accountId, userCrn, request.getEnvironments(),
                 userCrnFilter, machineUserCrnFilter)));
     }
 
     @Override
-    // TODO we need to handle the case when environments is empty and the sync will applied to all env in account
-    // until that resource based authz cannot be applied
-    @CheckPermissionByAccount(action = AuthorizationResourceAction.ENVIRONMENT_READ)
-    public SyncOperationStatus synchronizeAllUsers(SynchronizeAllUsersRequest request) {
+    @CheckPermissionByResourceObject
+    public SyncOperationStatus synchronizeAllUsers(@ResourceObject SynchronizeAllUsersRequest request) {
         String userCrn = checkActorCrn();
         String accountId = determineAccountId(userCrn, request.getAccountId());
 
@@ -98,22 +95,20 @@ public class UserV1Controller implements UserV1Endpoint {
 
         return checkOperationRejected(
                 operationToSyncOperationStatus.convert(
-                        userSyncService.synchronizeUsers(accountId, userCrn, nullToEmpty(request.getEnvironments()),
+                        userSyncService.synchronizeUsers(accountId, userCrn, request.getEnvironments(),
                                 nullToEmpty(request.getUsers()), nullToEmpty(request.getMachineUsers()))));
     }
 
     @Override
-    // TODO we need to handle the case when environments is empty and the setPassword will applied to all env in account
-    // until that resource based authz cannot be applied
-    @CheckPermissionByAccount(action = AuthorizationResourceAction.ENVIRONMENT_READ)
-    public SyncOperationStatus setPassword(SetPasswordRequest request) {
+    @CheckPermissionByResourceObject
+    public SyncOperationStatus setPassword(@ResourceObject SetPasswordRequest request) {
         String userCrn = checkActorCrn();
         String accountId = ThreadBasedUserCrnProvider.getAccountId();
         LOGGER.debug("setPassword() requested for user {} in account {}", userCrn, accountId);
 
         return checkOperationRejected(
                 operationToSyncOperationStatus.convert(
-                        passwordService.setPassword(accountId, userCrn, userCrn, request.getPassword(), nullToEmpty(request.getEnvironments()))));
+                        passwordService.setPassword(accountId, userCrn, userCrn, request.getPassword(), request.getEnvironments())));
     }
 
     @Override
