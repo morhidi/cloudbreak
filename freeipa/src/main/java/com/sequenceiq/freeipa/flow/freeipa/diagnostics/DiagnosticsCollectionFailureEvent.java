@@ -3,10 +3,7 @@ package com.sequenceiq.freeipa.flow.freeipa.diagnostics;
 import java.util.Map;
 import java.util.Set;
 
-import com.sequenceiq.freeipa.flow.freeipa.cleanup.CleanupEvent;
-import com.sequenceiq.freeipa.flow.freeipa.cleanup.event.AbstractCleanupEvent;
-
-public class LogCollectionFailureEvent extends AbstractLogCollectionEvent {
+public class DiagnosticsCollectionFailureEvent extends AbstractDiagnosticsCollectionEvent {
 
     private final String failedPhase;
 
@@ -14,7 +11,7 @@ public class LogCollectionFailureEvent extends AbstractLogCollectionEvent {
 
     private final Set<String> success;
 
-    public LogCollectionFailureEvent(LogCollectionEvent event, String failedPhase, Map<String, String> failureDetails,
+    public DiagnosticsCollectionFailureEvent(DiagnosticsCollectionEvent event, String failedPhase, Map<String, String> failureDetails,
             Set<String> success) {
         super(event);
         this.failedPhase = failedPhase;
@@ -36,7 +33,7 @@ public class LogCollectionFailureEvent extends AbstractLogCollectionEvent {
 
     @Override
     public String toString() {
-        return "LogCollectionFailureEvent{" +
+        return "DiagnosticsCollectionFailureEvent{" +
                 "failedPhase='" + failedPhase + '\'' +
                 ", failureDetails=" + failureDetails +
                 ", success=" + success +

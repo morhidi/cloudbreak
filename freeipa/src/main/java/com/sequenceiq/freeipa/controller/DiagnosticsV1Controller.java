@@ -7,8 +7,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sequenceiq.freeipa.api.v1.diagnostics.DiagnosticsV1Endpoint;
-import com.sequenceiq.freeipa.api.v1.diagnostics.model.LogCollectionRequest;
-import com.sequenceiq.freeipa.api.v1.diagnostics.model.LogCollectionResponse;
+import com.sequenceiq.freeipa.api.v1.diagnostics.model.DiagnosticsCollectionRequest;
+import com.sequenceiq.freeipa.api.v1.diagnostics.model.DiagnosticsCollectionResponse;
+import com.sequenceiq.freeipa.api.v1.operation.model.OperationStatus;
 import com.sequenceiq.freeipa.client.FreeIpaClientException;
 import com.sequenceiq.freeipa.client.FreeIpaClientExceptionWrapper;
 import com.sequenceiq.freeipa.service.diagnostics.DiagnosticsService;
@@ -25,12 +26,8 @@ public class DiagnosticsV1Controller implements DiagnosticsV1Endpoint {
     private DiagnosticsService diagnosticsService;
 
     @Override
-    public LogCollectionResponse collectLogs(@Valid LogCollectionRequest request) {
+    public OperationStatus collectDiagnostics(@Valid DiagnosticsCollectionRequest request) {
         String accountId = crnService.getCurrentAccountId();
-        try {
-            return diagnosticsService.collectLogs(request, accountId);
-        } catch (FreeIpaClientException e) {
-            throw new FreeIpaClientExceptionWrapper(e);
-        }
+        return diagnosticsService.collect(request, accountId);
     }
 }

@@ -3,7 +3,7 @@ package com.sequenceiq.freeipa.flow.freeipa.diagnostics;
 import com.sequenceiq.flow.core.FlowEvent;
 import com.sequenceiq.flow.event.EventSelectorUtil;
 
-public enum FreeIpaLogCollectionEvent implements FlowEvent {
+public enum FreeIpaDiagnosticsCollectionEvent implements FlowEvent {
 
     COLLECTION_EVENT("COLLECT_EVENT"),
     COLLECTION_STARTED_FINISHED_EVENT(EventSelectorUtil.selector(StartCollectionResponse.class)),
@@ -13,7 +13,7 @@ public enum FreeIpaLogCollectionEvent implements FlowEvent {
 
     private final String event;
 
-    FreeIpaLogCollectionEvent(String event) {
+    FreeIpaDiagnosticsCollectionEvent(String event) {
         this.event = event;
     }
 

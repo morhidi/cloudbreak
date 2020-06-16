@@ -7,7 +7,8 @@ public enum OperationType {
     SET_PASSWORD,
     CLEANUP,
     REPAIR,
-    DOWNSCALE;
+    DOWNSCALE,
+    DIAGNOSTICS_COLLECTION;
 
     public static OperationType fromSyncOperationType(SyncOperationType syncOperationType) {
         switch (syncOperationType) {

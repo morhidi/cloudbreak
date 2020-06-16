@@ -13,18 +13,19 @@ import com.sequenceiq.freeipa.flow.stack.AbstractStackAction;
 import com.sequenceiq.freeipa.flow.stack.StackFailureEvent;
 import com.sequenceiq.freeipa.service.freeipa.FreeIpaService;
 
-public abstract class AbstractFreeIpaLogCollectionAction<P extends Payload> extends AbstractStackAction<FreeIpaLogCollectionState, FreeIpaDiagnosticsCollectionEvent, FreeIpaContext, P> {
+public abstract class AbstractFreeIpaDiagnosticsCollectionAction<P extends Payload>
+        extends AbstractStackAction<FreeIpaDiagnosticsCollectionState, FreeIpaDiagnosticsCollectionEvent, FreeIpaContext, P> {
 
     @Inject
     private FreeIpaService freeIpaService;
 
-    public AbstractFreeIpaLogCollectionAction(Class<P> payloadClass) {
+    public AbstractFreeIpaDiagnosticsCollectionAction(Class<P> payloadClass) {
         super(payloadClass);
     }
 
     @Override
-    protected FreeIpaContext createFlowContext(FlowParameters flowParameters, StateContext<FreeIpaLogCollectionState, FreeIpaDiagnosticsCollectionEvent> stateContext,
-            P payload) {
+    protected FreeIpaContext createFlowContext(FlowParameters flowParameters,
+            StateContext<FreeIpaDiagnosticsCollectionState, FreeIpaDiagnosticsCollectionEvent> stateContext, P payload) {
         FreeIpa freeIpa = freeIpaService.findByStackId(payload.getResourceId());
         return new FreeIpaContext(flowParameters, freeIpa);
     }
